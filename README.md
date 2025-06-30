@@ -31,7 +31,7 @@ cd /opt/Onecloud-Cpu-Control
 
 ## 反馈问题和 Bug
 
-如果你在使用过程中遇到问题或发现 Bug，可以前往 [项目的 Issues 页面](https://github.com/distpeak/distpeak-show/issues) 提交反馈，我们会 ~~尽快~~ 处理。
+如果你在使用过程中遇到问题或发现 Bug，可以前往 [项目的 Issues 页面](https://github.com/lirzh/Onecloud-Cpu-Control/issues) 提交反馈，我们会 ~~尽快~~ 处理。
 
 ## 鸣谢
 
