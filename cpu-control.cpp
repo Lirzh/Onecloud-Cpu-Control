@@ -8,8 +8,64 @@
 #include <iomanip>
 #include <deque>
 #include <climits>  // 添加头文件以使用INT_MIN和INT_MAX
-
+#include <thread>
+#include <chrono>
 using namespace std;
+
+// 灯光亮度文件路径常量
+const std::string RED_PATH = "/sys/class/leds/onecloud:red:alive/brightness";
+const std::string BLUE_PATH = "/sys/class/leds/onecloud:blue:alive/brightness";
+const std::string GREEN_PATH = "/sys/class/leds/onecloud:green:alive/brightness";
+
+// 渐变步长（值越小过渡越平滑）
+const int STEP = 5;
+// 渐变延迟时间（单位：毫秒，控制渐变速度）
+const int DELAY_MS = 500;
+
+/**
+ * @brief 设置指定颜色的亮度
+ * @param colorPath 颜色对应的文件路径
+ * @param brightness 亮度值（0-255）
+ */
+void setBrightness(const std::string& colorPath, int brightness) {
+    std::ofstream fout(colorPath);
+    if (fout.is_open()) {
+        fout << brightness;
+        fout.close();
+    } else {
+        std::cerr << "无法打开文件: " << colorPath << std::endl;
+    }
+}
+
+/**
+ * @brief 颜色渐变函数
+ * @param start 起始亮度
+ * @param end 结束亮度
+ * @param colorPath 颜色路径
+ */
+void fade(int start, int end, const std::string& colorPath) {
+    if (start < end) {
+        for (int i = start; i <= end; i += STEP) {
+            setBrightness(colorPath, i);
+            std::this_thread::sleep_for(std::chrono::milliseconds(DELAY_MS));
+        }
+    } else {
+        for (int i = start; i >= end; i -= STEP) {
+            setBrightness(colorPath, i);
+            std::this_thread::sleep_for(std::chrono::milliseconds(DELAY_MS));
+        }
+    }
+}
+
+/**
+ * @brief 渐变线程函数（用于并行渐变）
+ * @param start 起始亮度
+ * @param end 结束亮度
+ * @param colorPath 颜色路径
+ */
+void fadeThread(int start, int end, const std::string& colorPath) {
+    fade(start, end, colorPath);
+}
 
 // 获取当前时间字符串
 string getCurrentTime() {
@@ -39,7 +95,7 @@ string formatDuration(time_t seconds) {
 // 写入日志
 void writeLog(const string& message) {
     ofstream logFile;
-    logFile.open("cpu_temp_control.log", ios::app);
+    logFile.open("cpu_control.log", ios::app);
     if (logFile.is_open()) {
         logFile << "[" << getCurrentTime() << "] " << message << endl;
         logFile.close();
@@ -52,7 +108,7 @@ void limitLogSize() {
     deque<string> lines;
     
     // 读取所有行
-    ifstream inFile("cpu_temp_control.log");
+    ifstream inFile("cpu_control.log");
     if (inFile.is_open()) {
         string line;
         while (getline(inFile, line)) {
@@ -66,7 +122,7 @@ void limitLogSize() {
     
     // 如果行数超过限制，重写日志
     if (lines.size() > MAX_LINES) {
-        ofstream outFile("cpu_temp_control.log");
+        ofstream outFile("cpu_control.log");
         if (outFile.is_open()) {
             for (const auto& line : lines) {
                 outFile << line << endl;
@@ -81,6 +137,65 @@ struct TemperatureRecord {
     int temp;
     string status;
 };
+
+// 根据CPU温度调节灯光
+void adjustLighting(int temp) {
+    if (temp <= 42) {
+        // 低温时显示绿色
+        setBrightness(RED_PATH, 0);
+        setBrightness(BLUE_PATH, 0);
+        setBrightness(GREEN_PATH, 255);
+	sleep(2);
+	setBrightness(RED_PATH, 0);
+        setBrightness(BLUE_PATH, 0);
+        setBrightness(GREEN_PATH, 0);
+	sleep(1);
+	setBrightness(RED_PATH, 0);
+        setBrightness(BLUE_PATH, 0);
+        setBrightness(GREEN_PATH, 255);
+	sleep(2);
+	setBrightness(RED_PATH, 0);
+        setBrightness(BLUE_PATH, 0);
+        setBrightness(GREEN_PATH, 0);
+	sleep(1);
+    } else if (temp >= 46) {
+        // 高温时显示红色
+        setBrightness(RED_PATH, 255);
+        setBrightness(BLUE_PATH, 0);
+        setBrightness(GREEN_PATH, 0);
+	sleep(2);
+	setBrightness(RED_PATH, 0);
+        setBrightness(BLUE_PATH, 0);
+        setBrightness(GREEN_PATH, 0);
+	sleep(1);
+	 setBrightness(RED_PATH, 255);
+        setBrightness(BLUE_PATH, 0);
+        setBrightness(GREEN_PATH, 0);
+	sleep(2);
+	setBrightness(RED_PATH, 0);
+        setBrightness(BLUE_PATH, 0);
+        setBrightness(GREEN_PATH, 0);
+	sleep(1);
+    } else {
+        // 适中温度显示黄色
+        setBrightness(RED_PATH, 255);
+        setBrightness(BLUE_PATH, 0);
+        setBrightness(GREEN_PATH, 255);
+	sleep(2);
+	setBrightness(RED_PATH, 0);
+        setBrightness(BLUE_PATH, 0);
+        setBrightness(GREEN_PATH, 0);
+	sleep(1);
+	setBrightness(RED_PATH, 255);
+        setBrightness(BLUE_PATH, 0);
+        setBrightness(GREEN_PATH, 255);
+	sleep(2);
+	setBrightness(RED_PATH, 0);
+        setBrightness(BLUE_PATH, 0);
+        setBrightness(GREEN_PATH, 0);
+	sleep(1);
+    }
+}
 
 int main() {
     time_t startTime = time(0);
@@ -195,6 +310,9 @@ int main() {
         cout << "日志文件: cpu_temp_control.log" << endl;
         cout << "=====================================" << endl;
 
+        // 根据CPU温度调节灯光
+        adjustLighting(temp);
+
         // 每小时写入一次统计信息
         static time_t lastStatsTime = startTime;
         if (currentTime - lastStatsTime >= 3600) {
@@ -207,9 +325,6 @@ int main() {
             // 检查并限制日志大小
             limitLogSize();
         }
-
-        // 等待6秒
-        sleep(6);
     }
 
     return 0;

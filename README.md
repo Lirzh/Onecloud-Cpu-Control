@@ -5,9 +5,9 @@
 
 - **名字**：Onecloud-Cpu-Control
 - **作者**：[Lirzh](https://github.com/lirzh)
-- **内容概括**：帮助你的玩客云自动调频降温的C++程序
+- **内容概括**：帮助你的玩客云自动调频降温的C++程序，并根据温度实时调整灯光。
 - **协议**：MIT
-- **最后更新**：2025.6.29
+- **最后更新**：2025.7.9
 - **关于AI**：该cpp程序由网上搜集后交由AI处理后人工检验，如有错误请联系作者。
 
 ## 使用方法
@@ -26,8 +26,17 @@ chmod +777 cpu-control
 
 ```
 cd /opt/Onecloud-Cpu-Control
-.\cpu-control
+./cpu-control
 ```
+
+## 版本
+
+| 发布时间  | 版本号                                                       |
+| --------- | ------------------------------------------------------------ |
+| 2025.7.9  | [发行版 1.1.0 · Lirzh/Onecloud-Cpu-Control](https://github.com/Lirzh/Onecloud-Cpu-Control/releases/tag/1.1.0) |
+| 2025.6.30 | [发行版 1.0.0 · Lirzh/Onecloud-Cpu-Control](https://github.com/Lirzh/Onecloud-Cpu-Control/releases/tag/1.0.0) |
+
+
 
 ## 反馈问题和 Bug
 
